@@ -12,8 +12,8 @@
   outputs =
     inputs@{ flake-parts, treefmt-nix, ... }:
     let
-      flakeModules = {
-        treefmt = {
+      flakeModules.formatting = {
+        common = {
           imports = [
             treefmt-nix.flakeModule
             ./modules/treefmt.nix
@@ -29,7 +29,7 @@
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" ];
-      imports = [ flakeModules.treefmt ];
+      imports = [ flakeModules.formatting.common ];
       flake = { inherit flakeModules; };
 
       perSystem =
@@ -37,7 +37,7 @@
         let
           composed = flake-parts.lib.mkFlake { inherit inputs; } {
             systems = [ system ];
-            imports = builtins.attrValues flakeModules;
+            imports = builtins.attrValues flakeModules.formatting;
             perSystem.treefmt.projectRoot = ./tests/fixtures;
           };
         in
