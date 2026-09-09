@@ -1,7 +1,7 @@
 # nix-tooling
 
 nix-tooling provides shared formatting and lint checks for repositories that use Nix
-flakes and `flake-parts`. Import `treefmt` and the language modules you need, then run
+flakes and `flake-parts`. Import `common` and the language modules you need, then run
 `nix fmt` to format your files and `nix flake check` to check them.
 
 You choose the modules explicitly. They do not detect languages, build applications,
@@ -16,8 +16,8 @@ inputs.nix-tooling.url = "github:adamcik/nix-tooling";
 inputs.nix-tooling.inputs.nixpkgs.follows = "nixpkgs";
 ```
 
-Import `treefmt` alongside your language modules inside `flake-parts.lib.mkFlake`. You
-do not need a separate treefmt-nix input: the `treefmt` module imports it for you.
+Import `common` alongside your language modules inside `flake-parts.lib.mkFlake`. You do
+not need a separate treefmt-nix input: the `common` module imports it for you.
 
 For a Python project with Django templates:
 
@@ -26,9 +26,9 @@ outputs = inputs@{ flake-parts, ... }:
   flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" ];
     imports = [
-      inputs.nix-tooling.flakeModules.treefmt
-      inputs.nix-tooling.flakeModules.python
-      inputs.nix-tooling.flakeModules.django
+      inputs.nix-tooling.flakeModules.formatting.common
+      inputs.nix-tooling.flakeModules.formatting.python
+      inputs.nix-tooling.flakeModules.formatting.django
     ];
   };
 ```
@@ -37,20 +37,23 @@ For Go, use these imports instead:
 
 ```nix
 imports = [
-  inputs.nix-tooling.flakeModules.treefmt
-  inputs.nix-tooling.flakeModules.go
+  inputs.nix-tooling.flakeModules.formatting.common
+  inputs.nix-tooling.flakeModules.formatting.go
 ];
 ```
 
-Always include `treefmt`; the language modules depend on it. When migrating, remove
+Always include `common`; the language modules depend on it. When migrating, remove
 previous flake formatter assignments and Alejandra configuration. All Nix files use
 **nixfmt**.
 
 ## Choose Modules
 
+All modules below are exported under `flakeModules.formatting`. They configure
+formatting and related checks, not development shells or application builds.
+
 | Module      | Tools and files                                             |
 | ----------- | ----------------------------------------------------------- |
-| `treefmt`   | nixfmt, dprint for Markdown/JSON/JSONC/TOML, and actionlint |
+| `common`    | nixfmt, dprint for Markdown/JSON/JSONC/TOML, and actionlint |
 | `python`    | Ruff formatting and a separate, non-fixing `checks.ruff`    |
 | `django`    | djlint for `*.html`, `*.jinja`, `*.jinja2`, and `*.j2`      |
 | `go`        | gofmt, followed by goimports                                |
@@ -111,7 +114,7 @@ Additional checks are opt-in. Enable treefmt-nix's `zizmor`, `shellcheck`, `shfm
 ## Development
 
 Before submitting changes, run `nix fmt` and `nix flake check`. This repository uses its
-own `treefmt` module. Its checks also combine all exported modules and run them against
+own `common` module. Its checks also combine all exported modules and run them against
 small sample files.
 
 This repository tests `x86_64-linux` only. Your repository chooses its own systems; the
