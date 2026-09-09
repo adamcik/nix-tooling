@@ -33,7 +33,7 @@
       flake = { inherit flakeModules; };
 
       perSystem =
-        { system, ... }:
+        { pkgs, system, ... }:
         let
           composed = flake-parts.lib.mkFlake { inherit inputs; } {
             systems = [ system ];
@@ -44,6 +44,7 @@
         {
           checks.modules-format = composed.checks.${system}.treefmt;
           checks.modules-ruff = composed.checks.${system}.ruff;
+          checks.nix-setup = import ./tests/nix-setup.nix { inherit pkgs; };
         };
     };
 }
