@@ -1,0 +1,34 @@
+name: Summarize lockfile version changes
+description: Summarize resolved tool and package version changes between two Git revisions.
+
+inputs:
+  base:
+    description: Git revision to compare from; the action resolves its merge base with head.
+    required: true
+  head:
+    description: Git revision to compare to.
+    required: true
+
+outputs:
+  message:
+    description: Markdown summary of resolved lockfile version changes.
+    value: ${{ steps.summary.outputs.message }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: "3.14"
+
+    - name: Summarize lockfile version changes
+      id: summary
+      shell: bash
+      env:
+        BASE_REVISION: ${{ inputs.base }}
+        HEAD_REVISION: ${{ inputs.head }}
+      run: >-
+        python3 "$GITHUB_ACTION_PATH/lockfile_version_changes.py"
+        --base "$BASE_REVISION"
+        --head "$HEAD_REVISION"

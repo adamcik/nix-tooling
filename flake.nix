@@ -44,6 +44,9 @@
         {
           checks.modules-format = composed.checks.${system}.treefmt;
           checks.modules-ruff = composed.checks.${system}.ruff;
+          checks.lockfile-version-changes = import ./tests/lockfile-version-changes.nix {
+            inherit pkgs;
+          };
           checks.nix-setup = import ./tests/nix-setup.nix { inherit pkgs; };
         };
     };
