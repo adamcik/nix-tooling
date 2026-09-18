@@ -145,6 +145,41 @@ evaluation only, `nix flake check` to build declared checks, or a selected `nix 
 target. The installer enables flakes and uses the job's GitHub token for Nix fetches by
 default.
 
+### Lockfile Version Changes
+
+`actions/lockfile-version-changes` compares the resolved package versions in root-level
+`mise.lock`, `mise.<environment>.lock`, `uv.lock`, `Cargo.lock`, `package-lock.json`,
+and `pnpm-lock.yaml` files. It emits a Markdown table that labels major, minor, patch,
+prerelease, and build-only changes, and identifies direct and transitive application
+dependencies. It does not currently parse `flake.lock`.
+
+Check out the complete history so the action can find the branch's merge base. A later
+step can publish the action's `message` output as a sticky pull-request comment:
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+
+steps:
+  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+    with:
+      fetch-depth: 0
+      persist-credentials: false
+  - id: lockfile-changes
+    uses: adamcik/nix-tooling/actions/lockfile-version-changes@COMMIT_SHA
+    with:
+      base: ${{ github.event.pull_request.base.sha }}
+      head: ${{ github.event.pull_request.head.sha }}
+  - uses: step-security/sticky-pull-request-comment@3f74a8f2b4dc745810ded9bbfd887679bccd13c2 # v3.0.5
+    with:
+      header: lockfile-version-changes
+      message: ${{ steps.lockfile-changes.outputs.message }}
+```
+
+Run these steps only for `pull_request` events. The action reads lockfiles and writes
+the summary output; it does not create or update comments itself.
+
 ### Private Flake Inputs
 
 To fetch inputs from other private GitHub repositories, pass a token with read access to
