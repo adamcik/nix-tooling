@@ -218,6 +218,25 @@ software. Cleanup requires Nix not to be installed already.
 Only the exact strings `"true"` and `"false"` are accepted. Self-hosted, ARM, macOS, and
 Windows runners are rejected before cleanup or installation.
 
+### Nix Trust and Configuration
+
+The runner user is trusted by default, matching the underlying installer. Set
+`trust-runner-user: "false"` when the job must not override daemon security settings.
+Pass additional daemon settings through `extra-conf`:
+
+```yaml
+- uses: adamcik/nix-tooling/actions/nix-setup@COMMIT_SHA
+  with:
+    trust-runner-user: "false"
+    extra-conf: |
+      accept-flake-config = false
+```
+
+`trust-runner-user` accepts only `"true"` or `"false"`. `extra-conf` is appended to
+`/etc/nix/nix.conf`, not exported as `NIX_CONFIG`. Avoid printing that file because it
+also contains the GitHub access token. Explicit `extra-conf` settings can override
+installer defaults; keep them under the workflow author's control.
+
 ## Development
 
 Before submitting changes, run `nix fmt` and `nix flake check`. This repository uses its
