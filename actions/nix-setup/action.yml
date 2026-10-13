@@ -9,6 +9,13 @@ inputs:
     description: Remove preinstalled tools and expand /nix before installation (true or false).
     required: false
     default: "false"
+  trust-runner-user:
+    description: Add the runner user to Nix trusted-users (true or false).
+    required: false
+    default: "true"
+  extra-conf:
+    description: Additional configuration appended to /etc/nix/nix.conf.
+    required: false
 
 runs:
   using: composite
@@ -17,18 +24,21 @@ runs:
       shell: bash
       env:
         MAKE_SPACE: ${{ inputs.make-space }}
+        TRUST_RUNNER_USER: ${{ inputs.trust-runner-user }}
       run: |
         if [[ "$RUNNER_ENVIRONMENT" != github-hosted || "$RUNNER_OS" != Linux || "$RUNNER_ARCH" != X64 ]]; then
           echo "::error::nix-setup supports GitHub-hosted x86_64 Ubuntu runners only."
           exit 1
         fi
-        case "$MAKE_SPACE" in
-          true|false) ;;
-          *)
-            echo "::error::make-space must be true or false."
-            exit 1
-            ;;
-        esac
+        for input in MAKE_SPACE TRUST_RUNNER_USER; do
+          case "${!input}" in
+            true|false) ;;
+            *)
+              echo "::error::$input must be true or false."
+              exit 1
+              ;;
+          esac
+        done
 
     - name: Make space for Nix
       if: inputs.make-space == 'true'
@@ -42,3 +52,5 @@ runs:
       uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
       with:
         github_access_token: ${{ inputs.github-token }}
+        set_as_trusted_user: ${{ inputs.trust-runner-user }}
+        extra_nix_config: ${{ inputs.extra-conf }}

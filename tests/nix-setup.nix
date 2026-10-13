@@ -5,6 +5,7 @@ pkgs.runCommand "nix-setup-check"
     nativeBuildInputs = [
       pkgs.action-validator
       pkgs.yq-go
+      pkgs.jq
       pkgs.shellcheck
     ];
   }
@@ -17,14 +18,21 @@ pkgs.runCommand "nix-setup-check"
     shellcheck --shell=bash validate.sh
 
     export RUNNER_ENVIRONMENT=github-hosted RUNNER_OS=Linux RUNNER_ARCH=X64
-    MAKE_SPACE=false bash -euo pipefail validate.sh
-    MAKE_SPACE=true bash -euo pipefail validate.sh
+    for make_space in false true; do
+      for trust_runner in false true; do
+        MAKE_SPACE="$make_space" TRUST_RUNNER_USER="$trust_runner" \
+          bash -euo pipefail validate.sh
+      done
+    done
 
-    for value in "" yes TRUE; do
-      if MAKE_SPACE="$value" bash -euo pipefail validate.sh > rejected.log 2>&1; then
-        echo "Accepted invalid make-space value: $value" >&2
-        exit 1
-      fi
+    export MAKE_SPACE=false TRUST_RUNNER_USER=true
+    for input in MAKE_SPACE TRUST_RUNNER_USER; do
+      for value in "" yes TRUE; do
+        if env "$input=$value" bash -euo pipefail validate.sh > rejected.log 2>&1; then
+          echo "Accepted invalid $input value: $value" >&2
+          exit 1
+        fi
+      done
     done
     export MAKE_SPACE=true
     for setting in RUNNER_ENVIRONMENT=self-hosted RUNNER_OS=macOS RUNNER_OS=Windows RUNNER_ARCH=ARM64; do
@@ -33,5 +41,15 @@ pkgs.runCommand "nix-setup-check"
         exit 1
       fi
     done
+
+    # Check wiring without installing Nix or removing any files.
+    yq -o=json action.yml > action.json
+    export FULL_CLEANUP_CONDITION="inputs.make-space == 'true'"
+    jq -e '.runs.steps[] | select(.name == "Make space for Nix") |
+      .if == env.FULL_CLEANUP_CONDITION' action.json >/dev/null
+    jq -e '.runs.steps[] | select(.name == "Install Nix") |
+      (.with.set_as_trusted_user == "\u0024{{ inputs.trust-runner-user }}") and
+      (.with.extra_nix_config == "\u0024{{ inputs.extra-conf }}") and
+      (.with.github_access_token == "\u0024{{ inputs.github-token }}")' action.json >/dev/null
     touch "$out"
   ''
