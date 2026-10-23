@@ -44,6 +44,14 @@
         {
           checks.modules-format = composed.checks.${system}.treefmt;
           checks.modules-ruff = composed.checks.${system}.ruff;
+          checks.ruff-source = import ./tests/ruff-source.nix {
+            inherit
+              inputs
+              flakeModules
+              pkgs
+              system
+              ;
+          };
           checks.lockfile-version-changes = import ./tests/lockfile-version-changes.nix {
             inherit pkgs;
           };
