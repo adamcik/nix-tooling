@@ -110,6 +110,27 @@ Ruff reads your `pyproject.toml` or Ruff configuration. Its lint check does not 
 treefmt exclusions. To exclude files from Ruff linting, set `extend-exclude` under
 `[tool.ruff]` in `pyproject.toml`, or use the equivalent Ruff configuration.
 
+To improve lint-check cache reuse, optionally set `nix-tooling.ruff.source` to a
+filtered source. It defaults to `treefmt.projectRoot`; interactive formatting and
+`checks.treefmt` remain unchanged. For example, exclude a documentation directory that
+contains no Python files, executable examples, or Ruff configuration:
+
+```nix
+perSystem = { lib, ... }: {
+  nix-tooling.ruff.source = lib.fileset.toSource {
+    root = ./.;
+    fileset = lib.fileset.difference (lib.fileset.gitTracked ./.) ./docs;
+  };
+};
+```
+
+This keeps new tracked files included by default. For a deliberately narrower source,
+use `lib.fileset.unions [ ./src ./tests ./pyproject.toml ]` instead. Preserve relative
+paths and include every configuration file Ruff reads, including nested configuration,
+files referenced by `extend`, and files used to infer the Python version. Omitting a
+configuration file can silently change lint rules or configuration discovery. Filtering
+does not replace Ruff's own file exclusions.
+
 Additional checks are opt-in. Enable treefmt-nix's `zizmor`, `shellcheck`, `shfmt`,
 `deadnix`, or `statix` programs in your repository if you need them.
 
