@@ -33,7 +33,12 @@
       flake = { inherit flakeModules; };
 
       perSystem =
-        { pkgs, system, ... }:
+        {
+          config,
+          pkgs,
+          system,
+          ...
+        }:
         let
           composed = flake-parts.lib.mkFlake { inherit inputs; } {
             systems = [ system ];
@@ -56,6 +61,10 @@
             inherit pkgs;
           };
           checks.nix-setup = import ./tests/nix-setup.nix { inherit pkgs; };
+          checks.actionlint = import ./tests/actionlint.nix {
+            inherit pkgs;
+            actionlint = config.treefmt.programs.actionlint.package;
+          };
         };
     };
 }
