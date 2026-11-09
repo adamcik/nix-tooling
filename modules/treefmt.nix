@@ -5,7 +5,10 @@
       flakeFormatter = true;
       flakeCheck = true;
       programs.nixfmt.enable = true;
-      programs.actionlint.enable = true;
+      programs.actionlint = {
+        enable = true;
+        package = pkgs.callPackage ../packages/actionlint.nix { };
+      };
       programs.dprint = {
         enable = true;
         includes = [

@@ -82,6 +82,12 @@ nix flake check
 `nix fmt` runs the treefmt wrapper to format files with the tools you selected. It also
 runs actionlint to check GitHub Actions workflows.
 
+The common module patches actionlint's hosted-runner table to recognize Ubuntu 26.04 and
+its ARM image while preserving unknown-label, OS-conflict, and shell checks. Remove the
+local package patch when upstream includes these labels. Consumers must update their
+pinned nix-tooling flake input to receive the fix; updating only the setup action's
+commit does not change the formatter.
+
 `nix flake check` automatically includes `checks.treefmt`. That check fails if files
 need formatting or actionlint reports errors. The `python` module also adds
 `checks.ruff`, which checks Python lint rules without changing files. Ruff linting runs
