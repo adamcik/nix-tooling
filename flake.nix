@@ -48,6 +48,7 @@
         in
         {
           checks.modules-format = composed.checks.${system}.treefmt;
+          checks.modules-rumdl = composed.checks.${system}.rumdl;
           checks.modules-ruff = composed.checks.${system}.ruff;
           checks.ruff-source = import ./tests/ruff-source.nix {
             inherit
@@ -65,6 +66,18 @@
           checks.actionlint = import ./tests/actionlint.nix {
             inherit pkgs;
             actionlint = config.treefmt.programs.actionlint.package;
+          };
+          checks.markdown = import ./tests/markdown.nix {
+            inherit pkgs;
+            formatter = config.treefmt.build.wrapper;
+          };
+          checks.rumdl-lint = import ./tests/rumdl-lint.nix {
+            inherit
+              inputs
+              flakeModules
+              pkgs
+              system
+              ;
           };
         };
     };
