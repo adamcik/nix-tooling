@@ -53,22 +53,22 @@ previous flake formatter assignments and Alejandra configuration. All Nix files 
 All modules below are exported under `flakeModules.formatting`. They configure
 formatting and related checks, not development shells or application builds.
 
-| Module      | Tools and files                                             |
-| ----------- | ----------------------------------------------------------- |
-| `common`    | nixfmt, dprint for Markdown/JSON/JSONC/TOML, and actionlint |
-| `python`    | Ruff formatting and a separate, non-fixing `checks.ruff`    |
-| `django`    | djlint for `*.html`, `*.jinja`, `*.jinja2`, and `*.j2`      |
-| `go`        | gofmt, followed by goimports                                |
-| `rust`      | rustfmt (upstream defaults to edition 2024)                 |
-| `web`       | oxfmt for JS/TS, CSS/SCSS, Vue, GraphQL, MDX, and YAML      |
-| `terraform` | OpenTofu `fmt` for Terraform configuration                  |
+| Module      | Tools and files                                                        |
+| ----------- | ---------------------------------------------------------------------- |
+| `common`    | nixfmt, rumdl for Markdown, dprint for JSON/JSONC/TOML, and actionlint |
+| `python`    | Ruff formatting and a separate, non-fixing `checks.ruff`               |
+| `django`    | djlint for `*.html`, `*.jinja`, `*.jinja2`, and `*.j2`                 |
+| `go`        | gofmt, followed by goimports                                           |
+| `rust`      | rustfmt (upstream defaults to edition 2024)                            |
+| `web`       | oxfmt for JS/TS, CSS/SCSS, Vue, GraphQL, MDX, and YAML                 |
+| `terraform` | OpenTofu `fmt` for Terraform configuration                             |
 
 Markdown prose wraps at about 88 columns. Tables keep aligned columns even when they
 exceed that width.
 
 The `web` module leaves standalone HTML to djlint and Markdown, JSON, JSONC, and TOML to
-dprint. This prevents those formatters from processing the same files. Add other
-formatters explicitly if your project needs file types not listed here.
+rumdl and dprint. This prevents those formatters from processing the same files. Add
+other formatters explicitly if your project needs file types not listed here.
 
 ## Format and Check
 
@@ -80,7 +80,11 @@ nix flake check
 ```
 
 `nix fmt` runs the treefmt wrapper to format files with the tools you selected. It also
-runs actionlint to check GitHub Actions workflows.
+runs actionlint to check GitHub Actions workflows. Markdown uses `rumdl fmt`, including
+automatic fixes for enabled rules. Prose reflows at 88 columns; code blocks and tables
+are exempt from the line-length rule. Remaining lint diagnostics are reported, but
+`rumdl fmt` does not fail solely for unfixable lint issues. The common module also adds
+a separate, read-only `checks.rumdl` so those issues fail `nix flake check`.
 
 The common module patches actionlint's hosted-runner table to recognize Ubuntu 26.04 and
 its ARM image while preserving unknown-label, OS-conflict, and shell checks. Remove the
@@ -89,9 +93,12 @@ pinned nix-tooling flake input to receive the fix; updating only the setup actio
 commit does not change the formatter.
 
 `nix flake check` automatically includes `checks.treefmt`. That check fails if files
-need formatting or actionlint reports errors. The `python` module also adds
-`checks.ruff`, which checks Python lint rules without changing files. Ruff linting runs
-separately from formatting, so `nix fmt` does not apply Ruff lint fixes.
+need formatting or actionlint reports errors. `checks.rumdl` checks Markdown lint rules
+without changing files, using the same rule settings as formatting. It scans the project
+root using rumdl's configuration and exclusions, not treefmt exclusions. The `python`
+module also adds `checks.ruff`, which checks Python lint rules without changing files.
+Ruff linting runs separately from formatting, so `nix fmt` does not apply Ruff lint
+fixes.
 
 Flake checks use the Nix source snapshot. For Git-based flakes, add new files to Git
 before checking them. dprint plugins come from nixpkgs; checks do not download them
@@ -111,6 +118,12 @@ perSystem = { lib, ... }: {
 ```
 
 Select a template profile in your djlint project configuration.
+
+rumdl reads your project configuration. The common module passes its prose-wrapping and
+table-alignment settings as inline overrides, which take precedence over that
+configuration. To replace them, use
+`treefmt.settings.formatter.rumdl-format.options = lib.mkForce [ ... ];` and include
+`"fmt"` and `"--no-cache"` in the replacement list.
 
 Ruff reads your `pyproject.toml` or Ruff configuration. Its lint check does not use
 treefmt exclusions. To exclude files from Ruff linting, set `extend-exclude` under

@@ -1,7 +1,7 @@
 {
   perSystem.treefmt.programs.oxfmt = {
     enable = true;
-    # dprint owns prose/data; djlint owns standalone HTML templates.
+    # rumdl owns Markdown, dprint owns data, and djlint owns standalone HTML.
     includes = [
       "*.js"
       "*.jsx"
