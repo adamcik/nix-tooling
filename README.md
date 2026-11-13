@@ -174,7 +174,7 @@ default.
 
 ### Actions Dependency Lockfiles
 
-`actions/verify-actions-lock` installs gh-actions-lock v0.4.1 and runs
+`actions/verify-actions-lock` installs the pinned gh-actions-lock release and runs
 `gh actions-lock --verify` in one step. It defaults to the caller's job token; pass
 `github-token` only when action dependencies need another read token.
 
