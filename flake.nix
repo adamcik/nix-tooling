@@ -61,6 +61,7 @@
             inherit pkgs;
           };
           checks.nix-setup = import ./tests/nix-setup.nix { inherit pkgs; };
+          checks.verify-actions-lock = import ./tests/verify-actions-lock.nix { inherit pkgs; };
           checks.actionlint = import ./tests/actionlint.nix {
             inherit pkgs;
             actionlint = config.treefmt.programs.actionlint.package;
