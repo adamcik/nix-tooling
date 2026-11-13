@@ -3,5 +3,14 @@
   "extends": [
     "local>adamcik/renovate-config",
     "github>adamcik/renovate-config:automerge"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^actions/verify-actions-lock/action\\.yml$/"],
+      "matchStrings": [
+        "ACTIONS_LOCK_VERSION:\\s*(?<currentValue>[^\\s#]+)\\s*# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)"
+      ]
+    }
   ]
 }

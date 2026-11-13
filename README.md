@@ -172,6 +172,34 @@ evaluation only, `nix flake check` to build declared checks, or a selected `nix 
 target. The installer enables flakes and uses the job's GitHub token for Nix fetches by
 default.
 
+### Actions Dependency Lockfiles
+
+`actions/verify-actions-lock` installs gh-actions-lock v0.4.1 and runs
+`gh actions-lock --verify` in one step. It defaults to the caller's job token; pass
+`github-token` only when action dependencies need another read token.
+
+```yaml
+permissions:
+  contents: read
+
+steps:
+  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+    with:
+      persist-credentials: false
+  - uses: adamcik/nix-tooling/actions/verify-actions-lock@COMMIT_SHA
+```
+
+Pin the action to a full commit SHA and run it on pull requests and the default branch.
+The runner must have `gh` and Bash installed; GitHub-hosted Ubuntu runners provide both.
+Verification needs network access and read access to the action repositories, so keep it
+outside `nix flake check`.
+
+Generate `.github/workflows/actions.lock` after adding the action call, using
+`gh actions-lock --no-interactive --no-narrow` to preserve existing SHA pins and version
+comments. This action only verifies: it does not generate locks, accept moved pins, or
+ignore local actions. Resolve unsupported local actions and remote reusable workflow
+coverage separately before adoption.
+
 ### Lockfile Version Changes
 
 `actions/lockfile-version-changes` compares the resolved package versions in root-level
@@ -269,7 +297,10 @@ installer defaults; keep them under the workflow author's control.
 Before submitting changes, run `nix fmt` and `nix flake check`. This repository uses its
 own `common` module. Its checks also combine all exported modules and run them against
 small sample files. The `nix-setup` check validates the action and workflow schemas and
-tests the setup guards without installing Nix or deleting runner software.
+tests the setup guards without installing Nix or deleting runner software. The
+`verify-actions-lock` check validates the composite action and tests command ordering
+and failure propagation with a fake `gh`, without network access. It does not substitute
+for upstream provenance verification in consumer CI.
 
 The GitHub CI workflow uses the local setup action before running flake checks. Its
 manual trigger can enable `make-space` to exercise cleanup on a disposable runner;
