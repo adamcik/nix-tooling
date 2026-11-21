@@ -50,6 +50,14 @@
           checks.modules-format = composed.checks.${system}.treefmt;
           checks.modules-rumdl = composed.checks.${system}.rumdl;
           checks.modules-ruff = composed.checks.${system}.ruff;
+          checks.go-toolchain = import ./tests/go-toolchain.nix {
+            inherit
+              inputs
+              flakeModules
+              pkgs
+              system
+              ;
+          };
           checks.ruff-source = import ./tests/ruff-source.nix {
             inherit
               inputs
